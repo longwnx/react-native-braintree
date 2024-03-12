@@ -4,6 +4,7 @@
 #import "BTDataCollector.h"
 #import "BraintreePaymentFlow.h"
 #import "BraintreeApplePay.h"
+#import <React/RCTEventEmitter.h>
 
 @interface RNBraintreeApplePay()<PKPaymentAuthorizationViewControllerDelegate>
 
@@ -16,6 +17,10 @@
 @end
 
 @implementation RNBraintreeApplePay
+
+- (NSArray<NSString *> *)supportedEvents {
+    return @[@"onShippingAddressUpdated"];
+}
 
 RCT_EXPORT_MODULE()
 
@@ -54,12 +59,24 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
 
         if (@available(iOS 11.0, *)) {
             paymentRequest.requiredBillingContactFields = [NSSet setWithObject:PKContactFieldPostalAddress];
+            paymentRequest.requiredShippingContactFields = [NSSet setWithObjects:PKContactFieldPostalAddress, PKContactFieldName, PKContactFieldEmailAddress, PKContactFieldPhoneNumber, nil];
         }
         paymentRequest.merchantCapabilities = PKMerchantCapability3DS;
         paymentRequest.paymentSummaryItems = @[
             [PKPaymentSummaryItem summaryItemWithLabel:companyName amount:[NSDecimalNumber decimalNumberWithString:amount]]
         ];
         paymentRequest.currencyCode = currencyCode;
+
+        PKShippingMethod *standardShipping = [PKShippingMethod summaryItemWithLabel:@"Giao hàng tiêu chuẩn" amount:[NSDecimalNumber decimalNumberWithString:@"0"]];
+        standardShipping.detail = @"Giao trong 5-7 ngày làm việc";
+        standardShipping.identifier = @"standard";
+
+        PKShippingMethod *expressShipping = [PKShippingMethod summaryItemWithLabel:@"Giao hàng nhanh" amount:[NSDecimalNumber decimalNumberWithString:@"5.00"]];
+        expressShipping.detail = @"Giao trong 2-3 ngày làm việc";
+        expressShipping.identifier = @"express";
+
+        paymentRequest.shippingMethods = @[standardShipping, expressShipping];
+
         self.resolve = resolve;
         self.reject = reject;
         [self setIsApplePaymentAuthorized:NO];
@@ -103,6 +120,21 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
                                  completion:^(BTApplePayCardNonce *tokenizedApplePayPayment, NSError *error) {
         [self handleTokenizationResult:tokenizedApplePayPayment error:error completion:completion];
     }];
+}
+
+- (void)paymentAuthorizationViewController:(PKPaymentAuthorizationViewController *)controller
+    didSelectShippingContact:(PKContact *)contact
+        completion:(void (^)(PKPaymentAuthorizationStatus, NSArray<PKShippingMethod *> *, NSArray<PKPaymentSummaryItem *> *))completion {
+        CNPostalAddress *postalAddress = contact.postalAddress;
+        NSDictionary *addressDict = @{
+            @"street": postalAddress.street ?: @"",
+            @"city": postalAddress.city ?: @"",
+            @"state": postalAddress.state ?: @"",
+            @"postalCode": postalAddress.postalCode ?: @"",
+            @"country": postalAddress.country ?: @"",
+            @"ISOCountryCode": postalAddress.ISOCountryCode ?: @""
+        };
+    [self sendEventWithName:@"onShippingAddressUpdated" body:addressDict];
 }
 
 - (void)paymentAuthorizationViewControllerDidFinish:(nonnull PKPaymentAuthorizationViewController *)controller {
