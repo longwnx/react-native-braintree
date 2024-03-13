@@ -1,9 +1,9 @@
 
 <div align="center">
 
-| Published Version | Package Version | Android SDK | iOS SDK |
-|:-----------:|:---------------:|:-----------:|:-------:|
-|[![npm](https://img.shields.io/npm/v/react-native-braintree.svg)](https://www.npmjs.com/package/react-native-braintree) | [v2.4.0](https://github.com/longwnx/react-native-braintree/releases/tag/v2.4.0) | 28 | 12.0 |
+| Published Version |                                 Package Version                                 | Android SDK | iOS SDK |
+|:-----------:|:-------------------------------------------------------------------------------:|:-----------:|:-------:|
+|[![npm](https://img.shields.io/npm/v/react-native-braintree.svg)](https://www.npmjs.com/package/react-native-braintree) | [v2.5.0](https://github.com/longwnx/react-native-braintree/releases/tag/v2.5.0) | 28 | 12.0 |
 
 </div>
 

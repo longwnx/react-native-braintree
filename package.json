@@ -1,7 +1,7 @@
 {
   "name": "@longwnx/react-native-braintree",
   "title": "React Native Braintree",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "node": ">=16",
   "description": "A react native interface for integrating payments using Braintree",
   "main": "index.js",
@@ -16,7 +16,8 @@
   "scripts": {
     "lint": "eslint .",
     "prettier:check": "prettier . -c --log-level=warn",
-    "prettier:format": "prettier --log-level=warn --write \"**/*.{jsx,js,ts,tsx}\""
+    "prettier:format": "prettier --log-level=warn --write \"**/*.{jsx,js,ts,tsx}\"",
+    "release": "release-it"
   },
   "repository": {
     "type": "git",
@@ -48,6 +49,25 @@
     "husky": "^8.0.3",
     "prettier": "^3.0.3",
     "react": "^16.9.0",
-    "react-native": "^0.61.5"
+    "react-native": "^0.61.5",
+    "@release-it/conventional-changelog": "^5.0.0",
+    "release-it": "^15.0.0"
+  },
+  "release-it": {
+    "git": {
+      "commitMessage": "chore: release ${version}",
+      "tagName": "v${version}"
+    },
+    "npm": {
+      "publish": true
+    },
+    "github": {
+      "release": true
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": "angular"
+      }
+    }
   }
 }
