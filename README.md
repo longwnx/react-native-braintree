@@ -3,12 +3,12 @@
 
 | Published Version | Package Version | Android SDK | iOS SDK |
 |:-----------:|:---------------:|:-----------:|:-------:|
-|[![npm](https://img.shields.io/npm/v/react-native-braintree.svg)](https://www.npmjs.com/package/react-native-braintree) | [v2.4.0](https://github.com/ekreative/react-native-braintree/releases/tag/v2.4.0) | 28 | 12.0 |
+|[![npm](https://img.shields.io/npm/v/react-native-braintree.svg)](https://www.npmjs.com/package/react-native-braintree) | [v2.4.0](https://github.com/longwnx/react-native-braintree/releases/tag/v2.4.0) | 28 | 12.0 |
 
 </div>
 
 
-# @ekreative/react-native-braintree
+# @longwnx/react-native-braintree
 
 ## Getting started
 
@@ -115,7 +115,7 @@ In your `AppDelegate.m`:
 ##### Show PayPall module
 
 ```javascript
-import RNBraintree from '@ekreative/react-native-braintree';
+import RNBraintree from '@longwnx/react-native-braintree';
 
 RNBraintree.showPayPalModule({
     clientToken: 'CLIENT_TOKEN_GENERATED_ON_SERVER_SIDE',
@@ -130,7 +130,7 @@ RNBraintree.showPayPalModule({
 
 ##### Card tokenization
 ```javascript
-import RNBraintree from '@ekreative/react-native-braintree';
+import RNBraintree from '@longwnx/react-native-braintree';
 
 RNBraintree.tokenizeCard({
     clientToken: 'CLIENT_TOKEN_GENERATED_ON_SERVER_SIDE',
@@ -146,7 +146,7 @@ RNBraintree.tokenizeCard({
 ```
 ##### Make Payment
 ```javascript
-import RNBraintree from '@ekreative/react-native-braintree';
+import RNBraintree from '@longwnx/react-native-braintree';
 
 RNBraintree.run3DSecureCheck({
     // Optional if you ran `tokenizeCard()` or other Braintree methods before
@@ -171,7 +171,7 @@ RNBraintree.run3DSecureCheck({
 
 ##### Request PayPal billing agreement
 ```javascript
-import RNBraintree from '@ekreative/react-native-braintree';
+import RNBraintree from '@longwnx/react-native-braintree';
 
 RNBraintree.requestPayPalBillingAgreement({
     clientToken: 'CLIENT_TOKEN_GENERATED_ON_SERVER_SIDE',
@@ -184,13 +184,13 @@ RNBraintree.requestPayPalBillingAgreement({
 ### iOS
 ##### Check if Apple Pay is available
 ```javascript
-import RNBraintree from '@ekreative/react-native-braintree';
+import RNBraintree from '@longwnx/react-native-braintree';
 
 console.log(RNBraintree.isApplePayAvailable())
 ```
 ##### Make payment using Apple Pay
 ```javascript
-import RNBraintree from '@ekreative/react-native-braintree';
+import RNBraintree from '@longwnx/react-native-braintree';
 
 RNBraintree.runApplePay({
     clientToken: 'CLIENT_TOKEN_GENERATED_ON_SERVER_SIDE',
@@ -201,10 +201,28 @@ RNBraintree.runApplePay({
     .then(result => console.log(result))
     .catch((error) => console.log(error));
 ```
+##### Make listener onShippingAddressUpdated
+```javascript
+import {NativeEventEmitter, NativeModules} from 'react-native';
+useEffect(() => {
+    const eventEmitter = new NativeEventEmitter(
+        NativeModules.RNBraintreeApplePay
+    );
+    const subscription = eventEmitter.addListener(
+        'onShippingAddressUpdated',
+        addressInfo => {
+            // Xử lý địa chỉ giao hàng mới tại đây
+            console.log('address', addressInfo);
+        }
+    );
+
+    return () => subscription.remove();
+}, []);
+```
 ### Android
 ##### Make payment using Google Pay
 ```javascript
-import RNBraintree from '@ekreative/react-native-braintree';
+import RNBraintree from '@longwnx/react-native-braintree';
 
 RNBraintree.runGooglePay({
     clientToken: 'CLIENT_TOKEN_GENERATED_ON_SERVER_SIDE',
@@ -217,8 +235,8 @@ RNBraintree.runGooglePay({
 
 ## TODO
 
-- [ ] Android. Check if we can split the logic in the `getDeviceData` method to call `new DataCollector(mBraintreeClient).collectDeviceData()` only once (it seems like it's currently may be called a second time from the `setup` method) https://github.com/ekreative/react-native-braintree/pull/37#issuecomment-1752470507
-- [ ] iOS. Try to use the new `getDeviceData` method in other methods, such as `tokenizeCard`, `showPayPalModule` https://github.com/ekreative/react-native-braintree/pull/37#issuecomment-1752470507
+- [ ] Android. Check if we can split the logic in the `getDeviceData` method to call `new DataCollector(mBraintreeClient).collectDeviceData()` only once (it seems like it's currently may be called a second time from the `setup` method) https://github.com/longwnx/react-native-braintree/pull/37#issuecomment-1752470507
+- [ ] iOS. Try to use the new `getDeviceData` method in other methods, such as `tokenizeCard`, `showPayPalModule` https://github.com/longwnx/react-native-braintree/pull/37#issuecomment-1752470507
 
 ## Useful Links and Resources
 If you want to read further you can follow these links

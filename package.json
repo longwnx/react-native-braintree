@@ -1,5 +1,5 @@
 {
-  "name": "@ekreative/react-native-braintree",
+  "name": "@longwnx/react-native-braintree",
   "title": "React Native Braintree",
   "version": "2.5.0",
   "node": ">=16",
@@ -20,15 +20,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ekreative/react-native-braintree.git",
-    "baseUrl": "https://github.com/ekreative/react-native-braintree"
+    "url": "git+https://github.com/longwnx/react-native-braintree.git",
+    "baseUrl": "https://github.com/longwnx/react-native-braintree"
   },
   "keywords": [
     "react-native"
   ],
   "author": {
-    "name": "Vasyl Nahuliak",
-    "email": "vasyl.nahuliak@gmail.com"
+    "name": "Long Nguyen Xuan",
+    "email": "nxl232@@gmail.com"
   },
   "license": "MIT",
   "licenseFilename": "LICENSE",

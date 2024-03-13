@@ -47,6 +47,13 @@ declare module '@ekreative/react-native-braintree' {
     localeCode?: string;
   }
 
+  export interface ShippingMethod {
+    label: string,
+    detail: string,
+    amount: string,
+    identifier: string
+  }
+
   // Export
 
   interface RNBraintreeModule {
@@ -61,6 +68,8 @@ declare module '@ekreative/react-native-braintree' {
       options: PayPalBillingAgreementOptions,
     ): Promise<BraintreeResponse>;
     getDeviceData(clientToken: string): Promise<string>;
+    updateShippingMethods(shippingMethods: Array<ShippingMethod>): Promise<string>;
+
   }
 
   const RNBraintree: RNBraintreeModule;

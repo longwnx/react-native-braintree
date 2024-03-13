@@ -3,5 +3,5 @@
 #import <PassKit/PassKit.h>
 
 @interface RNBraintreeApplePay : RCTEventEmitter <RCTBridgeModule, PKPaymentAuthorizationViewControllerDelegate>
-
+@property (nonatomic, strong) PKPaymentRequest *currentPaymentRequest;
 @end
