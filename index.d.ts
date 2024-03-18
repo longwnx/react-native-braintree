@@ -8,6 +8,7 @@ declare module '@ekreative/react-native-braintree' {
     clientToken: string;
     amount: string;
     currencyCode: string;
+    shippingMethods: ShippingMethod[]
   }
 
   export interface Run3DSecureCheckOptions
@@ -68,7 +69,6 @@ declare module '@ekreative/react-native-braintree' {
       options: PayPalBillingAgreementOptions,
     ): Promise<BraintreeResponse>;
     getDeviceData(clientToken: string): Promise<string>;
-    updateShippingMethods(shippingMethods: Array<ShippingMethod>): Promise<string>;
 
   }
 

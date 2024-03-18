@@ -46,6 +46,20 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
         return;
     }
 
+    NSArray *shippingMethodsArray = options[@"shippingMethods"];
+    NSMutableArray *shippingMethods = [NSMutableArray array];
+
+    for (NSDictionary *methodDict in shippingMethodsArray) {
+        PKShippingMethod *shippingMethod = [[PKShippingMethod alloc] init];
+        shippingMethod.label = methodDict[@"label"];
+        shippingMethod.amount = [NSDecimalNumber decimalNumberWithString:methodDict[@"amount"]];
+        shippingMethod.detail = methodDict[@"detail"];
+        shippingMethod.identifier = methodDict[@"identifier"];
+        [shippingMethods addObject:shippingMethod];
+    }
+
+
+
     self.apiClient = [[BTAPIClient alloc] initWithAuthorization: clientToken];
     self.dataCollector = [[BTDataCollector alloc] initWithAPIClient:self.apiClient];
 
@@ -62,74 +76,24 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
             paymentRequest.requiredShippingContactFields = [NSSet setWithObjects:PKContactFieldPostalAddress, PKContactFieldName, PKContactFieldEmailAddress, PKContactFieldPhoneNumber, nil];
         }
         self.currentPaymentRequest = paymentRequest;
+        self.paymentController = [[PKPaymentAuthorizationViewController alloc] initWithPaymentRequest:paymentRequest];
         paymentRequest.merchantCapabilities = PKMerchantCapability3DS;
         paymentRequest.paymentSummaryItems = @[
             [PKPaymentSummaryItem summaryItemWithLabel:companyName amount:[NSDecimalNumber decimalNumberWithString:amount]]
         ];
         paymentRequest.currencyCode = currencyCode;
-//
-//        PKShippingMethod *standardShipping = [PKShippingMethod summaryItemWithLabel:@"Giao hàng tiêu chuẩn" amount:[NSDecimalNumber decimalNumberWithString:@"0"]];
-//        standardShipping.detail = @"Giao trong 5-7 ngày làm việc";
-//        standardShipping.identifier = @"standard";
-//
-//        PKShippingMethod *expressShipping = [PKShippingMethod summaryItemWithLabel:@"Giao hàng nhanh" amount:[NSDecimalNumber decimalNumberWithString:@"5.00"]];
-//        expressShipping.detail = @"Giao trong 2-3 ngày làm việc";
-//        expressShipping.identifier = @"express";
-//
-//        paymentRequest.shippingMethods = @[standardShipping, expressShipping];
-
-        NSString *shippingAmount = @"10.00"; // Giả sử shipping cost là $10.00
-        NSString *discountAmount = @"-5.00"; // Giả sử discount là $5.00
-
-        // Tạo PKPaymentSummaryItem cho shipping
-        PKPaymentSummaryItem *shippingItem = [PKPaymentSummaryItem summaryItemWithLabel:@"Shipping" amount:[NSDecimalNumber decimalNumberWithString:shippingAmount]];
-
-      // Tạo PKPaymentSummaryItem cho discount
-        PKPaymentSummaryItem *discountItem = [PKPaymentSummaryItem summaryItemWithLabel:@"Discount" amount:[NSDecimalNumber decimalNumberWithString:discountAmount]];
-
-// Tính toán lại total amount sau khi đã có shipping và discount
-        NSDecimalNumber *totalAmount = [[NSDecimalNumber decimalNumberWithString:amount] decimalNumberByAdding:[NSDecimalNumber decimalNumberWithString:shippingAmount]];
-        totalAmount = [totalAmount decimalNumberByAdding:[NSDecimalNumber decimalNumberWithString:discountAmount]];
-
-// Cập nhật PKPaymentSummaryItem cho tổng số tiền
-        PKPaymentSummaryItem *totalItem = [PKPaymentSummaryItem summaryItemWithLabel:@"Total" amount:totalAmount];
-
-// Cập nhật mảng paymentSummaryItems với các item mới
-        paymentRequest.paymentSummaryItems = @[
-                [PKPaymentSummaryItem summaryItemWithLabel:companyName amount:[NSDecimalNumber decimalNumberWithString:amount]],
-                shippingItem,
-                discountItem,
-                totalItem
-        ];
+        paymentRequest.shippingMethods = shippingMethods;
 
         self.resolve = resolve;
         self.reject = reject;
         [self setIsApplePaymentAuthorized:NO];
         PKPaymentAuthorizationViewController *paymentController = [[PKPaymentAuthorizationViewController alloc] initWithPaymentRequest:paymentRequest];
         paymentController.delegate = self;
+        self.paymentController.delegate = self;
         [[self reactRoot] presentViewController:paymentController animated:YES completion:NULL];
     }];
 }
 
-RCT_EXPORT_METHOD(updateShippingMethods:(NSArray *)shippingMethodsArray
-        resolver:(RCTPromiseResolveBlock)resolve
-        rejecter:(RCTPromiseRejectBlock)reject) {
-    NSMutableArray<PKShippingMethod *> *shippingMethods = [NSMutableArray new];
-
-    for (NSDictionary *method in shippingMethodsArray) {
-        NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithString:method[@"amount"]];
-        PKShippingMethod *shippingMethod = [PKShippingMethod summaryItemWithLabel:method[@"label"] amount:amount];
-        shippingMethod.detail = method[@"detail"];
-        shippingMethod.identifier = method[@"identifier"];
-        [shippingMethods addObject:shippingMethod];
-    }
-
-    // Giả sử bạn đã lưu PKPaymentRequest làm biến instance `currentPaymentRequest`
-    self.currentPaymentRequest.shippingMethods = [NSArray arrayWithArray:shippingMethods];
-    PKPaymentAuthorizationViewController *paymentController = [[PKPaymentAuthorizationViewController alloc] initWithPaymentRequest:self.currentPaymentRequest];
-    resolve(@"Updated");
-//    resolve(shippingMethods)
-}
 
 - (void)handleTokenizationResult: (BTApplePayCardNonce *)tokenizedApplePayPayment
                            error: (NSError *)error
@@ -181,6 +145,7 @@ RCT_EXPORT_METHOD(updateShippingMethods:(NSArray *)shippingMethodsArray
         };
     [self sendEventWithName:@"onShippingAddressUpdated" body:addressDict];
     [self setIsApplePaymentAuthorized: YES];
+    completion(PKPaymentAuthorizationStatusSuccess, nil, self.currentPaymentRequest.paymentSummaryItems);
 }
 
 - (void)paymentAuthorizationViewControllerDidFinish:(nonnull PKPaymentAuthorizationViewController *)controller {

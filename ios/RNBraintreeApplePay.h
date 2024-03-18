@@ -4,4 +4,5 @@
 
 @interface RNBraintreeApplePay : RCTEventEmitter <RCTBridgeModule, PKPaymentAuthorizationViewControllerDelegate>
 @property (nonatomic, strong) PKPaymentRequest *currentPaymentRequest;
+@property (nonatomic, strong) PKPaymentAuthorizationViewController *paymentController;
 @end
