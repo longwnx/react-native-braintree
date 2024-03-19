@@ -1,4 +1,4 @@
-declare module '@ekreative/react-native-braintree' {
+declare module '@longwnx/react-native-braintree' {
   export interface BraintreeResponse {
     nonce: string;
     deviceData: string;
