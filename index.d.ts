@@ -69,7 +69,7 @@ declare module '@ekreative/react-native-braintree' {
       options: PayPalBillingAgreementOptions,
     ): Promise<BraintreeResponse>;
     getDeviceData(clientToken: string): Promise<string>;
-
+    updateShippingOptionsWithDetails(shippingMethods: ShippingMethod[]):  Promise<string>;
   }
 
   const RNBraintree: RNBraintreeModule;

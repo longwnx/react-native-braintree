@@ -62,6 +62,7 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
 
     self.apiClient = [[BTAPIClient alloc] initWithAuthorization: clientToken];
     self.dataCollector = [[BTDataCollector alloc] initWithAPIClient:self.apiClient];
+    self.amount = [NSDecimalNumber decimalNumberWithString:amount];
 
     BTApplePayClient *applePayClient = [[BTApplePayClient alloc] initWithAPIClient: self.apiClient];
 
@@ -134,6 +135,7 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
 - (void)paymentAuthorizationViewController:(PKPaymentAuthorizationViewController *)controller
     didSelectShippingContact:(PKContact *)contact
         completion:(void (^)(PKPaymentAuthorizationStatus, NSArray<PKShippingMethod *> *, NSArray<PKPaymentSummaryItem *> *))completion {
+    self.shippingContactCompletion = completion;
         CNPostalAddress *postalAddress = contact.postalAddress;
         NSDictionary *addressDict = @{
             @"street": postalAddress.street ?: @"",
@@ -145,8 +147,53 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
         };
     [self sendEventWithName:@"onShippingAddressUpdated" body:addressDict];
     [self setIsApplePaymentAuthorized: YES];
-    completion(PKPaymentAuthorizationStatusSuccess, nil, self.currentPaymentRequest.paymentSummaryItems);
+    completion(PKPaymentAuthorizationStatusSuccess, self.currentShippingMethods, self.currentPaymentRequest.paymentSummaryItems);
 }
+
+RCT_REMAP_METHOD(updateShippingOptionsWithDetails,
+        details:(NSArray *)details
+        resolver:(RCTPromiseResolveBlock)resolve
+        rejecter:(RCTPromiseRejectBlock)reject)
+{
+    NSMutableArray<PKShippingMethod *> *updatedShippingMethods = [NSMutableArray array];
+    for (NSDictionary *detail in details) {
+        PKShippingMethod *shippingMethod = [[PKShippingMethod alloc] init];
+        shippingMethod.identifier = detail[@"identifier"];
+        shippingMethod.detail = detail[@"detail"];
+        shippingMethod.label = detail[@"label"];
+        shippingMethod.amount = [NSDecimalNumber decimalNumberWithString:detail[@"amount"]];
+
+        [updatedShippingMethods addObject:shippingMethod];
+    }
+
+    self.currentShippingMethods = updatedShippingMethods;
+
+    NSDictionary *result = @{
+            @"message": @"Updated Success!",
+            @"data": details
+    };
+    resolve(result);
+}
+
+- (void)paymentAuthorizationViewController:(PKPaymentAuthorizationViewController *)controller
+                   didSelectShippingMethod:(PKShippingMethod *)shippingMethod
+                                completion:(void (^)(PKPaymentAuthorizationStatus, NSArray<PKPaymentSummaryItem *> *))completion {
+
+    NSDecimalNumber *productAmount = self.amount;
+
+    NSDecimalNumber *shippingCost = shippingMethod.amount;
+
+    NSDecimalNumber *totalAmount = [productAmount decimalNumberByAdding:shippingCost];
+
+    NSArray<PKPaymentSummaryItem *> *updatedPaymentSummaryItems = @[
+            [PKPaymentSummaryItem summaryItemWithLabel:@"Product total" amount:productAmount],
+            [PKPaymentSummaryItem summaryItemWithLabel:shippingMethod.label amount:shippingCost],
+            [PKPaymentSummaryItem summaryItemWithLabel:@"Total" amount:totalAmount]
+    ];
+
+    completion(PKPaymentAuthorizationStatusSuccess, updatedPaymentSummaryItems);
+}
+
 
 - (void)paymentAuthorizationViewControllerDidFinish:(nonnull PKPaymentAuthorizationViewController *)controller {
     [controller dismissViewControllerAnimated:YES completion:NULL];
