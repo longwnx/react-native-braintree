@@ -2,6 +2,11 @@ declare module '@longwnx/react-native-braintree' {
   export interface BraintreeResponse {
     nonce: string;
     deviceData: string;
+    paymentResponse: {
+      shippingContact: string;
+      billingContact: string;
+      paymentData: string
+    }
   }
 
   export interface BraintreeOptions {
@@ -49,10 +54,55 @@ declare module '@longwnx/react-native-braintree' {
   }
 
   export interface ShippingMethod {
-    label: string,
-    detail: string,
-    amount: string,
-    identifier: string
+    label: string;
+    detail: string;
+    amount: string;
+    identifier: string;
+  }
+
+  export interface PostalAddress {
+    street: string;
+    subLocality: string;
+    city: string;
+    postalCode: number | string;
+    country: string;
+    subAdministrativeArea: string;
+    state: string;
+    ISOCountryCode: string;
+  }
+
+  export interface ContactName {
+    namePrefix: string;
+    givenName: string;
+    nameSuffix: string;
+    middleName: string;
+    familyName: string;
+    nickname: string
+  }
+
+  export interface ShippingContact {
+    emailAddress: string;
+    postalAddress:  PostalAddress;
+    name: ContactName;
+  }
+
+  export interface BillingContact {
+    emailAddress: string;
+    postalAddress:  PostalAddress;
+    name: ContactName;
+  }
+
+  export interface PaymentResponse {
+    deviceData: string;
+    billingContact:  BillingContact;
+    shippingContact: ShippingContact;
+  }
+
+  export interface ContactDict {
+    name: ContactName;
+    postalAddress:  PostalAddress;
+    phoneNumber: string;
+    emailAddress: string;
   }
 
   // Export

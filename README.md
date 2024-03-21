@@ -3,7 +3,7 @@
 
 | Published Version |                                 Package Version                                 | Android SDK | iOS SDK |
 |:-----------:|:-------------------------------------------------------------------------------:|:-----------:|:-------:|
-|[![npm](https://img.shields.io/npm/v/react-native-braintree.svg)](https://www.npmjs.com/package/react-native-braintree) | [v2.5.0](https://github.com/longwnx/react-native-braintree/releases/tag/v2.5.0) | 28 | 12.0 |
+|[![npm](https://img.shields.io/npm/v/react-native-braintree.svg)](https://www.npmjs.com/package/react-native-braintree) | [v2.9.0](https://github.com/longwnx/react-native-braintree/releases/tag/v2.9.0) | 28 | 12.0 |
 
 </div>
 
@@ -198,10 +198,21 @@ RNBraintree.runApplePay({
     amount: '100.0',
     currencyCode: 'EUR'
     })
-    .then(result => console.log(result))
+    .then(result => {
+        console.log(result)
+        // {
+        //     nonce: string;
+        //     deviceData: string;
+        //     paymentResponse: {
+        //         shippingContact: string;
+        //         billingContact: string;
+        //         paymentData: string
+        //     }
+        // }
+    })
     .catch((error) => console.log(error));
 ```
-##### Make listener onShippingAddressUpdated
+##### Make listener Shipping Address Updated
 ```javascript
 import {NativeEventEmitter, NativeModules} from 'react-native';
 useEffect(() => {
@@ -211,7 +222,7 @@ useEffect(() => {
     const subscription = eventEmitter.addListener(
         'onShippingAddressUpdated',
         addressInfo => {
-            // Xử lý địa chỉ giao hàng mới tại đây
+            //Handle change shipping address
             console.log('address', addressInfo);
         }
     );
@@ -219,6 +230,44 @@ useEffect(() => {
     return () => subscription.remove();
 }, []);
 ```
+##### Make listener Shipping Option Change
+```javascript
+import {NativeEventEmitter, NativeModules} from 'react-native';
+useEffect(() => {
+    const eventEmitter = new NativeEventEmitter(
+        NativeModules.RNBraintreeApplePay
+    );
+    const subscription = eventEmitter.addListener(
+        'onShippingOptionChange',
+        option => {
+            //Handle change shipping option
+            console.log('option', option);
+        }
+    );
+
+    return () => subscription.remove();
+}, []);
+```
+
+##### Make listener User Accept
+```javascript
+import {NativeEventEmitter, NativeModules} from 'react-native';
+useEffect(() => {
+    const eventEmitter = new NativeEventEmitter(
+        NativeModules.RNBraintreeApplePay
+    );
+    const subscription = eventEmitter.addListener(
+        'onUserAccept',
+        option => {
+            //Handle change shipping option
+            console.log('option', option);
+        }
+    );
+
+    return () => subscription.remove();
+}, []);
+```
+
 ### Android
 ##### Make payment using Google Pay
 ```javascript

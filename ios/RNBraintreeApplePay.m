@@ -19,7 +19,7 @@
 @implementation RNBraintreeApplePay
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[@"onShippingAddressUpdated"];
+    return @[@"onShippingAddressUpdated", @"onShippingOptionChange", @"onUserAccept"];
 }
 
 RCT_EXPORT_MODULE()
@@ -98,6 +98,7 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
 
 - (void)handleTokenizationResult: (BTApplePayCardNonce *)tokenizedApplePayPayment
                            error: (NSError *)error
+                         payment:(PKPayment *)payment
                       completion: (void (^)(PKPaymentAuthorizationStatus))completion{
     if (!tokenizedApplePayPayment && self.reject) {
         self.reject(error.localizedDescription, error.localizedDescription, error);
@@ -107,8 +108,22 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
     }
     [self.dataCollector collectDeviceData:^(NSString * _Nonnull deviceData) {
         if (self.resolve) {
+            NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:6];
+
+            NSString *paymentData = [[NSString alloc] initWithData:payment.token.paymentData encoding:NSUTF8StringEncoding];
+            [paymentResponse setObject:paymentData forKey:@"paymentData"];
+
+            if (payment.billingContact) {
+                paymentResponse[@"billingContact"] = [self contactToString:payment.billingContact];
+            }
+
+            if (payment.shippingContact) {
+                paymentResponse[@"shippingContact"] = [self contactToString:payment.shippingContact];
+            }
             self.resolve(@{@"deviceData": deviceData,
-                        @"nonce": tokenizedApplePayPayment.nonce});
+                           @"nonce": tokenizedApplePayPayment.nonce,
+                           @"paymentResponse": paymentResponse
+            });
             completion(PKPaymentAuthorizationStatusSuccess);
             [self resetPaymentResolvers];
         }
@@ -128,7 +143,7 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
     BTApplePayClient *applePayClient = [[BTApplePayClient alloc] initWithAPIClient:self.apiClient];
     [applePayClient tokenizeApplePayPayment:payment
                                  completion:^(BTApplePayCardNonce *tokenizedApplePayPayment, NSError *error) {
-        [self handleTokenizationResult:tokenizedApplePayPayment error:error completion:completion];
+        [self handleTokenizationResult:tokenizedApplePayPayment error:error payment:payment completion:completion];
     }];
 }
 
@@ -137,15 +152,46 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
         completion:(void (^)(PKPaymentAuthorizationStatus, NSArray<PKShippingMethod *> *, NSArray<PKPaymentSummaryItem *> *))completion {
     self.shippingContactCompletion = completion;
         CNPostalAddress *postalAddress = contact.postalAddress;
-        NSDictionary *addressDict = @{
-            @"street": postalAddress.street ?: @"",
-            @"city": postalAddress.city ?: @"",
-            @"state": postalAddress.state ?: @"",
-            @"postalCode": postalAddress.postalCode ?: @"",
-            @"country": postalAddress.country ?: @"",
-            @"ISOCountryCode": postalAddress.ISOCountryCode ?: @""
-        };
-    [self sendEventWithName:@"onShippingAddressUpdated" body:addressDict];
+    NSString *namePrefix = contact.name.namePrefix ?: @"";
+    NSString *givenName = contact.name.givenName ?: @"";
+    NSString *middleName = contact.name.middleName ?: @"";
+    NSString *familyName = contact.name.familyName ?: @"";
+    NSString *nameSuffix = contact.name.nameSuffix ?: @"";
+    NSString *nickname = contact.name.nickname ?: @"";
+    NSString *street = contact.postalAddress.street ?: @"";
+    NSString *subLocality = contact.postalAddress.subLocality ?: @"";
+    NSString *city = contact.postalAddress.city ?: @"";
+    NSString *subAdministrativeArea = contact.postalAddress.subAdministrativeArea ?: @"";
+    NSString *state = contact.postalAddress.state ?: @"";
+    NSString *postalCode = contact.postalAddress.postalCode ?: @"";
+    NSString *country = contact.postalAddress.country ?: @"";
+    NSString *ISOCountryCode = contact.postalAddress.ISOCountryCode ?: @"";
+    NSString *phoneNumber = contact.phoneNumber.stringValue ?: @"";
+    NSString *emailAddress = contact.emailAddress ?: @"";
+
+    NSDictionary *contactDict = @{
+            @"name" : @{
+                    @"namePrefix" : namePrefix,
+                    @"givenName" : givenName,
+                    @"middleName" : middleName,
+                    @"familyName" : familyName,
+                    @"nameSuffix" : nameSuffix,
+                    @"nickname" : nickname
+            },
+            @"postalAddress" : @{
+                    @"street" : street,
+                    @"subLocality" : subLocality,
+                    @"city" : city,
+                    @"subAdministrativeArea" : subAdministrativeArea,
+                    @"state" : state,
+                    @"postalCode" : postalCode,
+                    @"country" : country,
+                    @"ISOCountryCode" : ISOCountryCode
+            },
+            @"phoneNumber" : phoneNumber,
+            @"emailAddress" : emailAddress
+    };
+    [self sendEventWithName:@"onShippingAddressUpdated" body:contactDict];
     [self setIsApplePaymentAuthorized: YES];
     completion(PKPaymentAuthorizationStatusSuccess, self.currentShippingMethods, self.currentPaymentRequest.paymentSummaryItems);
 }
@@ -179,7 +225,7 @@ RCT_REMAP_METHOD(updateShippingOptionsWithDetails,
                    didSelectShippingMethod:(PKShippingMethod *)shippingMethod
                                 completion:(void (^)(PKPaymentAuthorizationStatus, NSArray<PKPaymentSummaryItem *> *))completion {
 
-    NSDecimalNumber *productAmount = self.amount;
+    NSDecimalNumber *productAmount = self.amount;// self.amount là giá trị được lưu trữ từ options[@"amount"]
 
     NSDecimalNumber *shippingCost = shippingMethod.amount;
 
@@ -190,6 +236,12 @@ RCT_REMAP_METHOD(updateShippingOptionsWithDetails,
             [PKPaymentSummaryItem summaryItemWithLabel:shippingMethod.label amount:shippingCost],
             [PKPaymentSummaryItem summaryItemWithLabel:@"Total" amount:totalAmount]
     ];
+
+    NSDictionary *option = @{
+        @"selectedShippingOptionId": shippingMethod.identifier
+    };
+
+    [self sendEventWithName:@"onShippingOptionChange" body:option];
 
     completion(PKPaymentAuthorizationStatusSuccess, updatedPaymentSummaryItems);
 }
@@ -205,6 +257,59 @@ RCT_REMAP_METHOD(updateShippingOptionsWithDetails,
     }
     [self resetPaymentResolvers];
     self.isApplePaymentAuthorized = NULL;
+}
+
+#pragma mark - Private method
+- (NSString *_Nonnull)contactToString:(PKContact *_Nonnull)contact
+{
+    NSString *namePrefix = contact.name.namePrefix ?: @"";
+    NSString *givenName = contact.name.givenName ?: @"";
+    NSString *middleName = contact.name.middleName ?: @"";
+    NSString *familyName = contact.name.familyName ?: @"";
+    NSString *nameSuffix = contact.name.nameSuffix ?: @"";
+    NSString *nickname = contact.name.nickname ?: @"";
+    NSString *street = contact.postalAddress.street ?: @"";
+    NSString *subLocality = contact.postalAddress.subLocality ?: @"";
+    NSString *city = contact.postalAddress.city ?: @"";
+    NSString *subAdministrativeArea = contact.postalAddress.subAdministrativeArea ?: @"";
+    NSString *state = contact.postalAddress.state ?: @"";
+    NSString *postalCode = contact.postalAddress.postalCode ?: @"";
+    NSString *country = contact.postalAddress.country ?: @"";
+    NSString *ISOCountryCode = contact.postalAddress.ISOCountryCode ?: @"";
+    NSString *phoneNumber = contact.phoneNumber.stringValue ?: @"";
+    NSString *emailAddress = contact.emailAddress ?: @"";
+
+    NSDictionary *contactDict = @{
+            @"name" : @{
+                    @"namePrefix" : namePrefix,
+                    @"givenName" : givenName,
+                    @"middleName" : middleName,
+                    @"familyName" : familyName,
+                    @"nameSuffix" : nameSuffix,
+                    @"nickname" : nickname
+            },
+            @"postalAddress" : @{
+                    @"street" : street,
+                    @"subLocality" : subLocality,
+                    @"city" : city,
+                    @"subAdministrativeArea" : subAdministrativeArea,
+                    @"state" : state,
+                    @"postalCode" : postalCode,
+                    @"country" : country,
+                    @"ISOCountryCode" : ISOCountryCode
+            },
+            @"phoneNumber" : phoneNumber,
+            @"emailAddress" : emailAddress
+    };
+
+    NSError *error;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:contactDict options:0 error:&error];
+
+    if (!jsonData) {
+        return @"";
+    } else {
+        return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    }
 }
 
 #pragma mark - RootController
