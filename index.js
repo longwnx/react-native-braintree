@@ -1,9 +1,16 @@
 // main index.js
 
-import {NativeModules} from 'react-native';
+import {NativeModules, Platform} from 'react-native';
 
 const {RNBraintree} = NativeModules;
 const {RNBraintreeApplePay} = NativeModules;
+
+function updateShippingOptionsIfIOS(details) {
+  if (Platform.OS === 'ios' && RNBraintreeApplePay) {
+    RNBraintreeApplePay.updateShippingOptionsWithDetails(details);
+  }
+}
+
 
 export default {
   showPayPalModule: RNBraintree.showPayPalModule,
@@ -13,6 +20,6 @@ export default {
   runApplePay: RNBraintreeApplePay && RNBraintreeApplePay.runApplePay,
   requestPayPalBillingAgreement: RNBraintree.requestPayPalBillingAgreement,
   getDeviceData: RNBraintree.getDeviceData,
-  updateShippingOptionsWithDetails: RNBraintreeApplePay && RNBraintreeApplePay.updateShippingOptionsWithDetails,
+  updateShippingOptionsWithDetails: updateShippingOptionsIfIOS,
   isApplePayAvailable:RNBraintreeApplePay ? RNBraintreeApplePay.isApplePayAvailable : () => false,
 };
