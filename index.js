@@ -13,5 +13,6 @@ export default {
   runApplePay: RNBraintreeApplePay && RNBraintreeApplePay.runApplePay,
   requestPayPalBillingAgreement: RNBraintree.requestPayPalBillingAgreement,
   getDeviceData: RNBraintree.getDeviceData,
-  updateShippingOptionsWithDetails: RNBraintreeApplePay.updateShippingOptionsWithDetails
+  updateShippingOptionsWithDetails: RNBraintreeApplePay.updateShippingOptionsWithDetails,
+  isApplePayAvailable: RNBraintreeApplePay.isApplePayAvailable,
 };

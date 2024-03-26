@@ -120,6 +120,7 @@ declare module '@longwnx/react-native-braintree' {
     ): Promise<BraintreeResponse>;
     getDeviceData(clientToken: string): Promise<string>;
     updateShippingOptionsWithDetails(shippingMethods: ShippingMethod[]):  Promise<string>;
+    isApplePayAvailable(): boolean;
   }
 
   const RNBraintree: RNBraintreeModule;
