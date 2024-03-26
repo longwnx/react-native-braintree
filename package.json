@@ -1,7 +1,7 @@
 {
   "name": "@longwnx/react-native-braintree",
   "title": "React Native Braintree",
-  "version": "2.9.3",
+  "version": "2.9.4",
   "node": ">=16",
   "description": "A react native interface for integrating payments using Braintree",
   "main": "index.js",
