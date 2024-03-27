@@ -37,6 +37,9 @@ RCT_EXPORT_METHOD(runApplePay: (NSDictionary *)options
     NSString *amount = options[@"amount"];
     NSString *clientToken = options[@"clientToken"];
     NSString *currencyCode = options[@"currencyCode"];
+
+    self.companyName = options[@"companyName"];
+
     if (!companyName) {
         reject(@"NO_COMPANY_NAME", @"You must provide a `companyName`", nil);
         return;
@@ -234,7 +237,7 @@ RCT_REMAP_METHOD(updateShippingOptionsWithDetails,
     NSArray<PKPaymentSummaryItem *> *updatedPaymentSummaryItems = @[
             [PKPaymentSummaryItem summaryItemWithLabel:@"Product total" amount:productAmount],
             [PKPaymentSummaryItem summaryItemWithLabel:shippingMethod.label amount:shippingCost],
-            [PKPaymentSummaryItem summaryItemWithLabel:@"Total" amount:totalAmount]
+            [PKPaymentSummaryItem summaryItemWithLabel:self.companyName amount:totalAmount]
     ];
 
     NSDictionary *option = @{

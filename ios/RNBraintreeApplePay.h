@@ -9,6 +9,6 @@
 @property (nonatomic, copy) void (^shippingMethodCompletion)(PKPaymentAuthorizationStatus, NSArray<PKPaymentSummaryItem *> * _Nonnull);
 @property (strong, nonatomic) NSArray<PKShippingMethod *> *currentShippingMethods;
 @property (nonatomic, strong) NSDecimalNumber *amount;
-
+@property (nonatomic, strong) NSString *companyName;
 
 @end
